@@ -1,0 +1,26 @@
+{
+    "nombreApp" : "Club Andino Jáchal",
+    "rutas" : [
+        {
+            "ruta" : "/",
+            "icon" : "home",
+            "texto": "Inicio"
+        },
+        {
+            "ruta" : "turnos",
+            "icon" : "calendar_month_rounded",
+            "texto": "Turnos"
+        },
+        {
+            "ruta" : "biblioteca",
+            "icon" : "menu_book_rounded",
+            "texto": "Biblioteca"
+        },
+        {
+            "ruta" : "contacto",
+            "icon" : "account_circle_rounded",
+            "texto": "Contacto"
+        }
+
+    ]
+}
