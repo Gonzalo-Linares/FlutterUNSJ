@@ -1,0 +1,29 @@
+{
+    "novedades" : [
+        {
+            "titulo": "titulo1",
+            "descripcion": "descripcion1",
+            "ruta" : "link1",
+            "imagen" : "imagen1.jpg"
+        },
+        {
+            "titulo": "titulo2",
+            "descripcion": "descripcion2",
+            "ruta" : "link2",
+            "imagen" : "imagen2.jpg"
+        },
+        {
+            "titulo": "titulo3",
+            "descripcion": "descripcion3",
+            "ruta" : "link3",
+            "imagen" : "imagen3.jpg"
+        },
+        {
+            "titulo": "titulo4",
+            "descripcion": "descripcion4",
+            "ruta" : "link4",
+            "imagen" : "imagen4.jpg"
+        }
+
+    ]
+}
