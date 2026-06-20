@@ -1,4 +1,5 @@
-
+import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 
 class TarjetaInicio extends StatelessWidget {
   final String titulo;
@@ -65,7 +66,7 @@ class TarjetaInicio extends StatelessWidget {
         ]
       )
 
-    )
+    );
   }
 
 }

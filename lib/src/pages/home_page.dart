@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../widgets/main_layout.dart'; // Importa el layout base
+import '../provider/novedades_provider.dart';
+import '../widgets/main_layout.dart';
+import '../widgets/tarjeta_home.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,7 +13,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
-    return const MainLayout(
+    return MainLayout(
       title: 'Inicio',
       body: _listaNovedades(),
     );
