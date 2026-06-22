@@ -33,8 +33,8 @@ abstract class AppTheme {
         
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF7E1315), // Botones en terracota
-            foregroundColor: Colors.white,
+            backgroundColor: const Color(0xFFF7D070), // Botones en terracota
+            foregroundColor: Colors.black,
           ),
         ),
       );
@@ -77,8 +77,8 @@ abstract class AppTheme {
       // Botones que resaltan en la oscuridad con el tono terracota
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF7E1315),
-          foregroundColor: Colors.white,
+          backgroundColor: Color(0xFFF7D070),
+          foregroundColor: Colors.black,
           shadowColor: Colors.black45,
         ),
       ),
