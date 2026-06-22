@@ -20,11 +20,18 @@ class CustomDrawer extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Center(
-                    child: Image.asset(
-                      'assets/logo_caj3.png',
-                      width: 60.0,
-                      height: 60.0,
-                      fit: BoxFit.contain,
+                    child: Container(
+                      padding: const EdgeInsets.all(2.0),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Image.asset(
+                        'assets/logo_caj3.png',
+                        width: 60.0,
+                        height: 60.0,
+                        fit: BoxFit.contain,
+                      ),
                     ),
                 ),
                 const SizedBox(height: 8.0),
@@ -37,16 +44,7 @@ class CustomDrawer extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 5),
-                Text(
-                  'Menú de Opciones',
-                  style: TextStyle(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onPrimary
-                        .withValues(alpha: 0.8),
-                    fontSize: 14,
-                  ),
-                ),
+                
               ],
             ),
           ),
