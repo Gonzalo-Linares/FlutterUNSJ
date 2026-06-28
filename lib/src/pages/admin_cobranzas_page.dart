@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/pago.dart';
-import '../provider/pagos_provider.dart';
+import '../services/pagos_service.dart';
 import '../widgets/admin/pago_pendiente_card.dart';
 import '../widgets/main_layout.dart';
 
@@ -15,54 +15,64 @@ class AdminCobranzasPage extends StatefulWidget {
 
 class _AdminCobranzasPageState extends State<AdminCobranzasPage> {
   String _filtroEstado = 'pendiente';
-  List<Pago> _pagos = [];
-  bool _isLoading = true;
 
-  @override
-  void initState() {
-    super.initState();
-    _cargarPagos();
+  List<Pago> _filtrarPagos(List<Pago> pagos) {
+    if (_filtroEstado == 'todos') return pagos;
+
+    return pagos.where((pago) => pago.estado == _filtroEstado).toList();
   }
 
-  Future<void> _cargarPagos() async {
-    final data = await pagosProvider.cargarData();
+  int _contarPorEstado(List<Pago> pagos, String estado) {
+    return pagos.where((pago) => pago.estado == estado).length;
+  }
+
+  Future<void> _confirmarCambioEstado(
+    Pago pago,
+    String nuevoEstado,
+  ) async {
+    final esAprobacion = nuevoEstado == 'aprobado';
+
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(esAprobacion ? 'Aprobar pago' : 'Rechazar pago'),
+          content: Text(
+            esAprobacion
+                ? '¿Confirmás la aprobación del pago de ${pago.nombreSocio}?'
+                : '¿Confirmás el rechazo del pago de ${pago.nombreSocio}?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(esAprobacion ? 'Aprobar' : 'Rechazar'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmar != true) return;
+
+    if (nuevoEstado == 'aprobado') {
+      await PagosService.instance.aprobarPago(
+        pago.id,
+        revisadoPor: 'admin',
+      );
+    } else {
+      await PagosService.instance.rechazarPago(
+        pago.id,
+        revisadoPor: 'admin',
+      );
+    }
 
     if (!mounted) return;
 
-    setState(() {
-      _pagos = data;
-      _isLoading = false;
-    });
-  }
-
-  List<Pago> get _pagosFiltrados {
-    if (_filtroEstado == 'todos') return _pagos;
-
-    return _pagos.where((pago) => pago.estado == _filtroEstado).toList();
-  }
-
-  int get _cantidadPendientes {
-    return _pagos.where((pago) => pago.estado == 'pendiente').length;
-  }
-
-  int get _cantidadAprobados {
-    return _pagos.where((pago) => pago.estado == 'aprobado').length;
-  }
-
-  int get _cantidadRechazados {
-    return _pagos.where((pago) => pago.estado == 'rechazado').length;
-  }
-
-  void _actualizarEstadoPago(Pago pago, String nuevoEstado) {
-    final index = _pagos.indexWhere((item) => item.id == pago.id);
-
-    if (index == -1) return;
-
-    setState(() {
-      _pagos[index] = pago.copyWith(estado: nuevoEstado);
-    });
-
-    final mensaje = nuevoEstado == 'aprobado'
+    final mensaje = esAprobacion
         ? 'Pago aprobado correctamente.'
         : 'Pago rechazado correctamente.';
 
@@ -72,6 +82,8 @@ class _AdminCobranzasPageState extends State<AdminCobranzasPage> {
   }
 
   void _verComprobante(Pago pago) {
+    final esUrlReal = pago.comprobanteUrl.startsWith('http');
+
     showDialog(
       context: context,
       builder: (context) {
@@ -81,10 +93,26 @@ class _AdminCobranzasPageState extends State<AdminCobranzasPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(
-                  Icons.receipt_long_outlined,
-                  size: 48.0,
-                ),
+                if (esUrlReal)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12.0),
+                    child: Image.network(
+                      pago.comprobanteUrl,
+                      height: 220.0,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(
+                          Icons.broken_image_outlined,
+                          size: 56.0,
+                        );
+                      },
+                    ),
+                  )
+                else
+                  const Icon(
+                    Icons.receipt_long_outlined,
+                    size: 48.0,
+                  ),
                 const SizedBox(height: 12.0),
                 Text(
                   pago.nombreSocio,
@@ -101,11 +129,13 @@ class _AdminCobranzasPageState extends State<AdminCobranzasPage> {
                   'Archivo: ${pago.comprobanteUrl}',
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 12.0),
-                const Text(
-                  'La visualización de la imagen real se integrará luego con Firebase Storage.',
-                  textAlign: TextAlign.center,
-                ),
+                if (!esUrlReal) ...[
+                  const SizedBox(height: 12.0),
+                  const Text(
+                    'La imagen real se integrará luego con Firebase Storage.',
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ],
             ),
           ),
@@ -129,15 +159,16 @@ class _AdminCobranzasPageState extends State<AdminCobranzasPage> {
 
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
-    } else {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('No se pudo abrir WhatsApp.'),
-        ),
-      );
+      return;
     }
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('No se pudo abrir WhatsApp.'),
+      ),
+    );
   }
 
   @override
@@ -149,135 +180,158 @@ class _AdminCobranzasPageState extends State<AdminCobranzasPage> {
       title: 'Cobranzas',
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Card(
-              elevation: 3,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16.0),
-              ),
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14.0),
-                decoration: BoxDecoration(
-                  color: colores.primary,
-                  borderRadius: BorderRadius.circular(16.0),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.admin_panel_settings_outlined,
-                      color: colores.onPrimary,
-                      size: 34.0,
+        child: StreamBuilder<List<Pago>>(
+          stream: PagosService.instance.obtenerPagosStream(),
+          builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(
+                child: Text('Error al cargar pagos: ${snapshot.error}'),
+              );
+            }
+
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+
+            final pagos = snapshot.data ?? [];
+            final pagosFiltrados = _filtrarPagos(pagos);
+
+            return Column(
+              children: [
+                Card(
+                  elevation: 3,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16.0),
+                  ),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14.0),
+                    decoration: BoxDecoration(
+                      color: colores.primary,
+                      borderRadius: BorderRadius.circular(16.0),
                     ),
-                    const SizedBox(height: 8.0),
-                    Text(
-                      'Panel de Cobranzas',
-                      style: tema.textTheme.titleLarge?.copyWith(
-                        color: colores.onPrimary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4.0),
-                    Text(
-                      'Revisá comprobantes y actualizá el estado de cada pago.',
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: tema.textTheme.bodySmall?.copyWith(
-                        color: colores.onPrimary.withValues(alpha: 0.85),
-                      ),
-                    ),
-                    const SizedBox(height: 10.0),
-                    Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Expanded(
-                          child: _ResumenEstadoChip(
-                            texto: 'Pend.: $_cantidadPendientes',
-                            icono: Icons.schedule_outlined,
+                        Icon(
+                          Icons.admin_panel_settings_outlined,
+                          color: colores.onPrimary,
+                          size: 34.0,
+                        ),
+                        const SizedBox(height: 8.0),
+                        Text(
+                          'Panel de Cobranzas',
+                          style: tema.textTheme.titleLarge?.copyWith(
+                            color: colores.onPrimary,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
-                        const SizedBox(width: 4.0),
-                        Expanded(
-                          child: _ResumenEstadoChip(
-                            texto: 'Aprob.: $_cantidadAprobados',
-                            icono: Icons.check_circle_outline,
+                        const SizedBox(height: 4.0),
+                        Text(
+                          'Revisá comprobantes y actualizá el estado de cada pago.',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: tema.textTheme.bodySmall?.copyWith(
+                            color: colores.onPrimary.withValues(alpha: 0.85),
                           ),
                         ),
-                        const SizedBox(width: 4.0),
-                        Expanded(
-                          child: _ResumenEstadoChip(
-                            texto: 'Rech.: $_cantidadRechazados',
-                            icono: Icons.cancel_outlined,
-                          ),
+                        const SizedBox(height: 10.0),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _ResumenEstadoChip(
+                                texto:
+                                    'Pend.: ${_contarPorEstado(pagos, 'pendiente')}',
+                                icono: Icons.schedule_outlined,
+                              ),
+                            ),
+                            const SizedBox(width: 4.0),
+                            Expanded(
+                              child: _ResumenEstadoChip(
+                                texto:
+                                    'Aprob.: ${_contarPorEstado(pagos, 'aprobado')}',
+                                icono: Icons.check_circle_outline,
+                              ),
+                            ),
+                            const SizedBox(width: 4.0),
+                            Expanded(
+                              child: _ResumenEstadoChip(
+                                texto:
+                                    'Rech.: ${_contarPorEstado(pagos, 'rechazado')}',
+                                icono: Icons.cancel_outlined,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
+                  ),
+                ),
+                const SizedBox(height: 12.0),
+                DropdownButtonFormField<String>(
+                  initialValue: _filtroEstado,
+                  decoration: const InputDecoration(
+                    labelText: 'Filtrar pagos',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: const [
+                    DropdownMenuItem(
+                      value: 'todos',
+                      child: Text('Todos'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'pendiente',
+                      child: Text('Pendientes'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'aprobado',
+                      child: Text('Aprobados'),
+                    ),
+                    DropdownMenuItem(
+                      value: 'rechazado',
+                      child: Text('Rechazados'),
+                    ),
                   ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 12.0),
-            DropdownButtonFormField<String>(
-              initialValue: _filtroEstado,
-              decoration: const InputDecoration(
-                labelText: 'Filtrar pagos',
-                border: OutlineInputBorder(),
-              ),
-              items: const [
-                DropdownMenuItem(
-                  value: 'todos',
-                  child: Text('Todos'),
-                ),
-                DropdownMenuItem(
-                  value: 'pendiente',
-                  child: Text('Pendientes'),
-                ),
-                DropdownMenuItem(
-                  value: 'aprobado',
-                  child: Text('Aprobados'),
-                ),
-                DropdownMenuItem(
-                  value: 'rechazado',
-                  child: Text('Rechazados'),
-                ),
-              ],
-              onChanged: (valor) {
-                if (valor == null) return;
+                  onChanged: (valor) {
+                    if (valor == null) return;
 
-                setState(() {
-                  _filtroEstado = valor;
-                });
-              },
-            ),
-            const SizedBox(height: 12.0),
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _pagosFiltrados.isEmpty
+                    setState(() {
+                      _filtroEstado = valor;
+                    });
+                  },
+                ),
+                const SizedBox(height: 12.0),
+                Expanded(
+                  child: pagosFiltrados.isEmpty
                       ? const Center(
                           child: Text('No hay pagos para mostrar.'),
                         )
                       : ListView.builder(
-                          itemCount: _pagosFiltrados.length,
+                          itemCount: pagosFiltrados.length,
                           itemBuilder: (context, index) {
-                            final pago = _pagosFiltrados[index];
+                            final pago = pagosFiltrados[index];
 
                             return PagoPendienteCard(
                               pago: pago,
-                              onAprobar: () =>
-                                  _actualizarEstadoPago(pago, 'aprobado'),
-                              onRechazar: () =>
-                                  _actualizarEstadoPago(pago, 'rechazado'),
+                              onAprobar: () => _confirmarCambioEstado(
+                                pago,
+                                'aprobado',
+                              ),
+                              onRechazar: () => _confirmarCambioEstado(
+                                pago,
+                                'rechazado',
+                              ),
                               onContactarWhatsapp: () =>
                                   _contactarPorWhatsapp(pago),
                               onVerComprobante: () => _verComprobante(pago),
                             );
                           },
                         ),
-            ),
-          ],
+                ),
+              ],
+            );
+          },
         ),
       ),
     );

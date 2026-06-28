@@ -171,7 +171,7 @@ class _EstadoPagoChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final datos = _datosEstado();
+    final datos = _datosEstado(context);
 
     return Chip(
       avatar: Icon(
@@ -191,25 +191,27 @@ class _EstadoPagoChip extends StatelessWidget {
     );
   }
 
-  _EstadoVisual _datosEstado() {
+  _EstadoVisual _datosEstado(BuildContext context) {
+    final colores = Theme.of(context).colorScheme;
+
     switch (estado) {
       case 'aprobado':
-        return const _EstadoVisual(
+        return _EstadoVisual(
           texto: 'Aprobado',
           icono: Icons.check_circle_outline,
-          color: Colors.green,
+          color: colores.primary,
         );
       case 'rechazado':
-        return const _EstadoVisual(
+        return _EstadoVisual(
           texto: 'Rechazado',
           icono: Icons.cancel_outlined,
-          color: Colors.redAccent,
+          color: colores.error,
         );
       default:
-        return const _EstadoVisual(
+        return _EstadoVisual(
           texto: 'Pendiente',
           icono: Icons.schedule_outlined,
-          color: Colors.orange,
+          color: colores.tertiary,
         );
     }
   }
