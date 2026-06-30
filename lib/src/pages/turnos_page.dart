@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../widgets/main_layout.dart';
-// Asegurate de que este archivo contenga la clase de Firebase y la variable firebaseProvider
 import '../provider/turnos_provider.dart'; 
 
 class TurnosPage extends StatefulWidget {
@@ -104,7 +103,7 @@ class _TurnosPageState extends State<TurnosPage> {
         
         FocusScope.of(context).unfocus();
 
-        // Mostramos el mensaje 
+        
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('¡Turno pedido con éxito!'),
@@ -240,7 +239,7 @@ class _TurnosPageState extends State<TurnosPage> {
             const Text('Tus Turnos Activos', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             
-            //LISTA DE TURNOS EN TIEMPO REAL
+            //LISTA DE TURNOS 
             Expanded(
               child: StreamBuilder<List<dynamic>>(
                 stream: firebaseProvider.obtenerTurnosStream(), 
