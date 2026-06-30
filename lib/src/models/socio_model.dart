@@ -1,9 +1,9 @@
-
 class SocioModel {
   String? id;
   String nombre;
   String apellido;
   String dni;
+  String telefono;
   bool activo;
 
   SocioModel({
@@ -11,16 +11,18 @@ class SocioModel {
     required this.nombre,
     required this.apellido,
     required this.dni,
-    this.activo = true, // al dar de alta, el socio está activo
+    this.telefono = '',
+    this.activo = true,
   });
 
   // Mapea los datos que vienen de Firebase hacia nuestra app
-  factory SocioModel.fromFirestore(Map<String, dynamic> data, String documentId) {
+  factory SocioModel.fromFirestore(Map<String, dynamic> data,String documentId) {
     return SocioModel(
-      id: documentId, 
+      id: documentId,
       nombre: data['nombre'] ?? '',
       apellido: data['apellido'] ?? '',
       dni: data['dni'] ?? '',
+      telefono: data['telefono'] ?? '',
       activo: data['activo'] ?? true,
     );
   }
@@ -31,6 +33,7 @@ class SocioModel {
       'nombre': nombre,
       'apellido': apellido,
       'dni': dni,
+      'telefono': telefono,
       'activo': activo,
     };
   }

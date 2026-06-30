@@ -35,7 +35,7 @@ class SociosPage extends StatelessWidget {
               final socio = socios[index];
               return ListTile(
                 title: Text('${socio.nombre} ${socio.apellido}'),
-                subtitle: Text('DNI: ${socio.dni}'),
+                subtitle: Text(socio.telefono.isEmpty ? 'DNI: ${socio.dni}' : 'DNI: ${socio.dni} - Tel: ${socio.telefono}'),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -71,6 +71,7 @@ class SociosPage extends StatelessWidget {
     final nombreCtrl = TextEditingController(text: socio?.nombre ?? '');
     final apellidoCtrl = TextEditingController(text: socio?.apellido ?? '');
     final dniCtrl = TextEditingController(text: socio?.dni ?? '');
+    final telefonoCtrl = TextEditingController(text: socio?.telefono ?? '');
 
     showDialog(
       context: context,
@@ -82,6 +83,7 @@ class SociosPage extends StatelessWidget {
             TextField(controller: nombreCtrl, decoration: const InputDecoration(labelText: 'Nombre')),
             TextField(controller: apellidoCtrl, decoration: const InputDecoration(labelText: 'Apellido')),
             TextField(controller: dniCtrl, decoration: const InputDecoration(labelText: 'DNI')),
+            TextField(controller: telefonoCtrl,keyboardType: TextInputType.phone,decoration: const InputDecoration(labelText: 'Teléfono')),
           ],
         ),
         actions: [
@@ -96,11 +98,13 @@ class SociosPage extends StatelessWidget {
                   nombre: nombreCtrl.text,
                   apellido: apellidoCtrl.text,
                   dni: dniCtrl.text,
+                  telefono: telefonoCtrl.text.trim(),
                 ));
               } else {
                 socio.nombre = nombreCtrl.text;
                 socio.apellido = apellidoCtrl.text;
                 socio.dni = dniCtrl.text;
+                socio.telefono = telefonoCtrl.text.trim();
                 await _socioService.actualizarSocio(socio);
               }
               if (context.mounted) Navigator.pop(context);
