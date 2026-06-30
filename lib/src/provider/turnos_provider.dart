@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
 class FirebaseProvider {
   
@@ -11,8 +12,8 @@ class FirebaseProvider {
       // .add() crea un documento nuevo automáticamente con un ID único
       await _turnosCollection.add(nuevoTurno);
     } catch (e) {
-      print('Error al guardar el turno: $e');
-      throw e;
+      debugPrint('Error al guardar el turno: $e');
+      rethrow;
     }
   }
 
@@ -39,7 +40,7 @@ class FirebaseProvider {
     try {
       await _turnosCollection.doc(idDocumento).delete();
     } catch (e) {
-      print('Error al eliminar el turno: $e');
+      debugPrint('Error al eliminar el turno: $e');
     }
   }
 }
