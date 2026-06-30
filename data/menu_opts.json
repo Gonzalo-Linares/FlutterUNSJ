@@ -17,6 +17,11 @@
             "texto": "Biblioteca"
         },
         {
+            "ruta" : "pago",
+            "icon" : "credit_card_rounded",
+            "texto": "Pago"
+        },
+        {
             "ruta" : "contacto",
             "icon" : "account_circle_rounded",
             "texto": "Contacto"

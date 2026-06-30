@@ -32,6 +32,32 @@ class PagosService {
     }).toList();
   }
 
+  Future<void> registrarComprobante({
+    required String socioId,
+    required String nombreSocio,
+    required String telefono,
+    required String comprobanteUrl,
+    required String tipoArchivo,
+    double monto = 0,
+  }) async {
+    final ahora = DateTime.now();
+
+    await _pagosRef.add({
+      'socioId': socioId,
+      'nombreSocio': nombreSocio,
+      'telefono': telefono,
+      'mes': _nombreMes(ahora.month),
+      'anio': ahora.year,
+      'monto': monto,
+      'estado': 'pendiente',
+      'comprobanteUrl': comprobanteUrl,
+      'fechaCarga': FieldValue.serverTimestamp(),
+      'fechaRevision': null,
+      'revisadoPor': '',
+      'tipoArchivo': tipoArchivo,
+    });
+  }
+
   Future<void> aprobarPago(
     String pagoId, {
     String revisadoPor = '',
@@ -64,5 +90,24 @@ class PagosService {
       'fechaRevision': FieldValue.serverTimestamp(),
       'revisadoPor': revisadoPor,
     });
+  }
+
+  String _nombreMes(int mes) {
+    const meses = [
+      'Enero',
+      'Febrero',
+      'Marzo',
+      'Abril',
+      'Mayo',
+      'Junio',
+      'Julio',
+      'Agosto',
+      'Septiembre',
+      'Octubre',
+      'Noviembre',
+      'Diciembre',
+    ];
+
+    return meses[mes - 1];
   }
 }
