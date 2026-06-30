@@ -25,6 +25,28 @@ class SocioService {
       }).toList();
     });
   }
+  // BUSCAR SOCIO POR DNI
+  Future<SocioModel?> buscarSocioPorDni(String dni) async {
+    try {
+      final snapshot = await _sociosRef
+          .where('dni', isEqualTo: dni.trim())
+          .where('activo', isEqualTo: true)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isEmpty) return null;
+
+      final doc = snapshot.docs.first;
+
+      return SocioModel.fromFirestore(
+        doc.data() as Map<String, dynamic>,
+        doc.id,
+      );
+    } catch (e) {
+      debugPrint('Error al buscar socio por DNI: $e');
+      rethrow;
+    }
+  }
 
   // MODIFICAR (Actualizar)
   Future<void> actualizarSocio(SocioModel socio) async {
